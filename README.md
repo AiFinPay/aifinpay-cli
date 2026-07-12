@@ -122,4 +122,4 @@ aifinpay quote-split --chain solana --merchant-amount 5000000 | jq -r .total
 
 Built on [`@aifinpay/mcp`](https://www.npmjs.com/package/@aifinpay/mcp) · [aifinpay.io](https://aifinpay.io)
 
-MIT © CoinSecurities (AiFinPay)
+MIT © AiFinPay (AiFinPay)
