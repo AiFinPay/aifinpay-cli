@@ -76,6 +76,12 @@ func init() {
 		"claim":       {"agent_claim_self", "Attach this agent to a user's AiFinPay account via a magic link.", cmdClaim},
 		"pay-split":   {"pay_with_split", "Get on-chain instructions for a fee-on-top atomic 3-way payment.", cmdPaySplit},
 		"quote-split": {"quote_split", "Compute the fee-on-top breakdown (view only, no payment).", cmdQuoteSplit},
+
+		// Identity management. Without a persisted key every command would run
+		// under a different throwaway wallet — see keystore.go.
+		"init":   {"", "Create and save a persistent agent identity.", cmdInit},
+		"import": {"", "Adopt an existing base58 agent secret.", cmdImport},
+		"whoami": {"", "Show which agent identity is in effect.", cmdWhoami},
 	}
 }
 
@@ -251,9 +257,20 @@ func callTool(tool string, arguments map[string]any) string {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	// Refuse to spend from a wallet that disappears when this process exits.
+	requireIdentity(tool)
+
 	parts := mcpCommand()
 	cmd := exec.CommandContext(ctx, parts[0], parts[1:]...)
 	cmd.Env = os.Environ() // pass AIFINPAY_AGENT_SECRET / BASE_URL / MAX_USD through
+	// Inject the keystore identity so every command drives the SAME wallet.
+	// Without this the MCP server mints a fresh agent per invocation, so
+	// `address` and `call` would disagree. An explicit env var still wins.
+	if os.Getenv(envSecret) == "" {
+		if secret := loadKeystoreSecret(); secret != "" {
+			cmd.Env = append(cmd.Env, envSecret+"="+secret)
+		}
+	}
 	cmd.Stderr = os.Stderr // the MCP server logs to stderr; surface it
 
 	stdin, err := cmd.StdinPipe()
@@ -538,8 +555,18 @@ GLOBAL FLAGS
   -h, --help            show this help
   -v, --version         print version
 
+GETTING STARTED
+  aifinpay init         create a persistent agent identity (once)
+  aifinpay address      show where to send funds
+  aifinpay call ...     pay a provider
+
+  Every command launches its own MCP server, so without a saved identity each
+  one would use a DIFFERENT throwaway wallet and anything you funded would be
+  unreachable. Commands that move funds refuse to run until an identity exists.
+
 ENVIRONMENT
-  AIFINPAY_AGENT_SECRET base58 agent secret (omit for a fresh ephemeral agent)
+  AIFINPAY_AGENT_SECRET base58 agent secret (64-byte); overrides the keystore
+  AIFINPAY_HOME         keystore directory (default ~/.aifinpay)
   AIFINPAY_BASE_URL     API base URL (default https://aifinpay.io)
   AIFINPAY_TIMEOUT_MS   per-call timeout in ms (default 30000)
   AIFINPAY_MAX_USD      hard cap (USD) per single payment
