@@ -23,13 +23,16 @@ func newFlagSet(name string) *flagSet {
 	}
 }
 
-func (f *flagSet) StringVar(p *string, name, def, usage string)  { f.fs.StringVar(p, name, def, usage) }
+func (f *flagSet) StringVar(p *string, name, def, usage string)     { f.fs.StringVar(p, name, def, usage) }
 func (f *flagSet) BoolVar(p *bool, name string, def bool, u string) { f.fs.BoolVar(p, name, def, u) }
 func (f *flagSet) Float64Var(p *float64, name string, def float64, u string) {
 	f.fs.Float64Var(p, name, def, u)
 }
 
 func (f *flagSet) wasSet(name string) bool { return f.set[name] }
+
+// args returns the positional arguments left after flag parsing.
+func (f *flagSet) args() []string { return f.fs.Args() }
 
 func (f *flagSet) parse(args []string) {
 	f.fs.SetOutput(os.Stderr)
