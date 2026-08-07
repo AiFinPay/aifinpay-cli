@@ -66,7 +66,6 @@ aifinpay call --provider exa --data '{"query":"latest x402 spec"}'
 | `aifinpay call` | Pay & call an AiFinPay-registered provider. Auto-routes price, chain & bridge. | `--provider`\* `--data` `--stdin` `--method` `--cost` |
 | `aifinpay quote` | Inspect a 402 challenge for a URL **without paying**. | `--url`\* `--method` |
 | `aifinpay fetch` | Fetch any URL, auto-paying an HTTP 402 challenge (x402). | `--url`\* `--method` `--body` `--stdin` `--headers` `--max-amount-usd` `--facilitator` |
-| `aifinpay claim` | Attach this agent to a user's AiFinPay account via a magic link. | `--magic-link`\* `--label` |
 | `aifinpay pay-split` | Get on-chain instructions for a fee-on-top atomic 3-way payment. | `--chain`\* `--merchant-wallet`\* `--merchant-amount`\* `--order-id`\* `--fee-recipient` |
 | `aifinpay quote-split` | Compute the fee-on-top breakdown (view only, no payment). | `--chain`\* `--merchant-amount`\* |
 
