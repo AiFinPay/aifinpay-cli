@@ -1,7 +1,7 @@
 // aifinpay — agent-first CLI for AiFinPay ("Stripe for AI agents").
 //
 // It wraps the official @aifinpay/mcp server (launched under the hood via
-// `npx -y @aifinpay/mcp`) and exposes each of its 7 tools as a clean CLI
+// `npx -y @aifinpay/mcp`) and exposes its audited tools as a clean CLI
 // command. Stdout is always JSON (the machine contract); --output table is
 // for humans. Zero interactive prompts, semantic exit codes, stdin piping.
 //
@@ -73,7 +73,6 @@ func init() {
 		"call":        {"agent_call", "Pay & call an AiFinPay-registered provider (exa, io-net, venice, …).", cmdCall},
 		"quote":       {"agent_quote", "Inspect a 402 challenge for a URL without paying.", cmdQuote},
 		"fetch":       {"payable_fetch", "Fetch any URL, auto-paying an HTTP 402 challenge (x402).", cmdFetch},
-		"claim":       {"agent_claim_self", "Attach this agent to a user's AiFinPay account via a magic link.", cmdClaim},
 		"pay-split":   {"pay_with_split", "Get on-chain instructions for a fee-on-top atomic 3-way payment.", cmdPaySplit},
 		"quote-split": {"quote_split", "Compute the fee-on-top breakdown (view only, no payment).", cmdQuoteSplit},
 
@@ -185,22 +184,6 @@ func cmdFetch(args []string) {
 		a["facilitator"] = facilitator
 	}
 	emit(callTool("payable_fetch", a), g)
-}
-
-func cmdClaim(args []string) {
-	fs, g := newFS("claim", "aifinpay claim --magic-link <url> [--label NAME]")
-	var link, label string
-	fs.StringVar(&link, "magic-link", "", "one-time magic link from the user's email (required)")
-	fs.StringVar(&label, "label", "", "human-friendly agent label")
-	fs.parse(args)
-	if link == "" {
-		fail(exitInput, "--magic-link is required")
-	}
-	a := map[string]any{"magic_link_url": link}
-	if label != "" {
-		a["label"] = label
-	}
-	emit(callTool("agent_claim_self", a), g)
 }
 
 func cmdPaySplit(args []string) {
