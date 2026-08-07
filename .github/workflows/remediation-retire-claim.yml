@@ -1,0 +1,60 @@
+name: Retire CLI magic-link claim
+
+on:
+  push:
+    branches:
+      - security/audit-2026-08-06-remediation
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security/audit-2026-08-06-remediation
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+      - name: Remove retired claim command
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('main.go')
+          s = p.read_text()
+          s = s.replace('`npx -y @aifinpay/mcp`) and exposes each of its 7 tools', '`npx -y @aifinpay/mcp`) and exposes its audited tools')
+          s = re.sub(r'\n\t\t"claim":\s+\{"agent_claim_self"[^\n]*\},', '', s, count=1)
+          s, count = re.subn(r'\nfunc cmdClaim\(args \[\]string\) \{.*?\n\}\n\nfunc cmdPaySplit', '\nfunc cmdPaySplit', s, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit(f'cmdClaim replacement count={count}')
+          p.write_text(s)
+
+          r = Path('README.md')
+          text = r.read_text()
+          # Remove command-table/help rows and explanatory paragraphs that still
+          # advertise autonomous use of a user login bearer token.
+          text = '\n'.join(
+              line for line in text.splitlines()
+              if 'aifinpay claim' not in line and 'agent_claim_self' not in line
+          ) + '\n'
+          r.write_text(text)
+          PY
+      - name: Assert retired bearer-login surface is gone
+        run: |
+          ! grep -R -n 'agent_claim_self\|--magic-link\|aifinpay claim' main.go README.md
+      - name: Go quality gate
+        run: |
+          gofmt -w main.go
+          go vet ./...
+          go test -race ./...
+          go build ./...
+      - name: Commit retirement
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add main.go README.md
+          git commit -m "security: retire CLI magic-link account claim command"
+          git push origin HEAD:security/audit-2026-08-06-remediation
