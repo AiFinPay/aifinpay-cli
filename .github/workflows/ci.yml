@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Format gate
+        run: |
+          test -z "$(gofmt -l .)" || { echo "gofmt required:"; gofmt -l .; exit 1; }
+      - name: Vet
+        run: go vet ./...
+      - name: Unit tests
+        run: go test -race ./...
+      - name: Build
+        run: go build -trimpath -o /tmp/aifinpay .
+      - name: Ensure no plaintext keystore field is written
+        run: |
+          ! grep -R 'json:"secret"' --include='*.go' . || \
+            grep -R 'type legacyKeystore' keystore.go
+
+  installer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax
+        run: sh -n install.sh scripts/build.sh
+      - name: Checksum verification is mandatory
+        run: |
+          grep -q 'SHA256SUMS' install.sh
+          grep -q 'SHA-256 mismatch' install.sh
