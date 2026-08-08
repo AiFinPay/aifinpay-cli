@@ -209,16 +209,20 @@ func cmdPaySplit(args []string) {
 }
 
 func cmdQuoteSplit(args []string) {
-	fs, g := newFS("quote-split", "aifinpay quote-split --chain <solana|polygon> --merchant-amount A")
+	fs, g := newFS("quote-split", "aifinpay quote-split --chain <solana|polygon> --merchant-amount A [--include-creator]")
 	var chain, amount string
+	var includeCreator bool
 	fs.StringVar(&chain, "chain", "", "chain: solana|polygon (required)")
 	fs.StringVar(&amount, "merchant-amount", "", "merchant amount in chain units (required)")
+	fs.BoolVar(&includeCreator, "include-creator", false, "include the optional 0.01% creator fee")
 	fs.parse(args)
 	requireChain(chain)
 	if amount == "" {
 		fail(exitInput, "--merchant-amount is required")
 	}
-	emit(callTool("quote_split", map[string]any{"chain": chain, "merchant_amount": amount}), g)
+	emit(callTool("quote_split", map[string]any{
+		"chain": chain, "merchant_amount": amount, "include_creator": includeCreator,
+	}), g)
 }
 
 func requireChain(chain string) {

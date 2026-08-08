@@ -1,7 +1,8 @@
 # aifinpay — CLI for AiFinPay ("Stripe for AI Agents")
 
-Agent-first command-line interface for **AiFinPay** — pay-per-call x402 payments
-and on-chain settlement on **Polygon** and **Solana**. It wraps the official
+Agent-first command-line interface for **AiFinPay** HTTP 402 negotiation,
+quotes, identity and settlement instructions. Fund-moving routes remain
+fail-closed unless the SDK verifies a current deployment. It wraps the official
 [`@aifinpay/mcp`](https://www.npmjs.com/package/@aifinpay/mcp) server and exposes
 every tool as a clean CLI command.
 
@@ -15,8 +16,8 @@ $ aifinpay quote-split --chain polygon --merchant-amount 1000000
   "chain": "polygon",
   "merchant": "1000000",
   "treasury_fee": "10000",
-  "ip_creator_fee": "100",
-  "total": "1010100",
+  "ip_creator_fee": "0",
+  "total": "1010000",
   "protocol": "AiFinPay v5.3"
 }
 ```
@@ -67,7 +68,7 @@ aifinpay call --provider exa --data '{"query":"latest x402 spec"}'
 | `aifinpay quote` | Inspect a 402 challenge for a URL **without paying**. | `--url`\* `--method` |
 | `aifinpay fetch` | Fetch any URL, auto-paying an HTTP 402 challenge (x402). | `--url`\* `--method` `--body` `--stdin` `--headers` `--max-amount-usd` `--facilitator` |
 | `aifinpay pay-split` | Get on-chain instructions for a fee-on-top atomic 3-way payment. | `--chain`\* `--merchant-wallet`\* `--merchant-amount`\* `--order-id`\* `--fee-recipient` |
-| `aifinpay quote-split` | Compute the fee-on-top breakdown (view only, no payment). | `--chain`\* `--merchant-amount`\* |
+| `aifinpay quote-split` | Compute the fee-on-top breakdown (view only, no payment). | `--chain`\* `--merchant-amount`\* `--include-creator` |
 
 `*` = required. Global flags: `--output json|table`, `-h/--help`, `-v/--version`.
 
@@ -116,8 +117,8 @@ aifinpay quote-split --chain solana --merchant-amount 5000000 | jq -r .total
 - **Stdout = data, stderr = everything else.** Safe to pipe straight into `jq`.
 - **JSON by default.** `--output table` is for humans; scripts should rely on JSON.
 - **No prompts, ever.** A missing required value exits with code `1` and a message on stderr.
-- Payments settle on-chain (Polygon via `B2BSplitter`, Solana via Seat PDA). Fund
-  the relevant address from `aifinpay address` before calling paid endpoints.
+- Settlement instructions are returned only for verified, enabled routes; legacy
+  fee-inclusive or not-yet-deployed routes return an error before signing.
 
 Built on [`@aifinpay/mcp`](https://www.npmjs.com/package/@aifinpay/mcp) · [aifinpay.io](https://aifinpay.io)
 
