@@ -74,8 +74,8 @@ func init() {
 		"quote":       {"agent_quote", "Inspect a 402 challenge for a URL without paying.", cmdQuote},
 		"fetch":       {"payable_fetch", "Fetch any URL, auto-paying an HTTP 402 challenge (x402).", cmdFetch},
 		"claim":       {"agent_claim_self", "Attach this agent to a user's AiFinPay account via a magic link.", cmdClaim},
-		"pay-split":   {"pay_with_split", "Get on-chain instructions for a fee-on-top atomic 3-way payment.", cmdPaySplit},
-		"quote-split": {"quote_split", "Compute the fee-on-top breakdown (view only, no payment).", cmdQuoteSplit},
+		"pay-split":   {"pay_with_split", "Retired compatibility command; never creates an invoice.", cmdPaySplit},
+		"quote-split": {"quote_split", "Retired compatibility command; use a canonical AIFP-1 quote.", cmdQuoteSplit},
 
 		// Identity management. Without a persisted key every command would run
 		// under a different throwaway wallet — see keystore.go.
@@ -203,39 +203,12 @@ func cmdClaim(args []string) {
 	emit(callTool("agent_claim_self", a), g)
 }
 
-func cmdPaySplit(args []string) {
-	fs, g := newFS("pay-split", "aifinpay pay-split --chain <solana|polygon> --merchant-wallet W --merchant-amount A --order-id ID [--fee-recipient R]")
-	var chain, wallet, amount, orderID, feeRecipient string
-	fs.StringVar(&chain, "chain", "", "settlement chain: solana|polygon (required)")
-	fs.StringVar(&wallet, "merchant-wallet", "", "merchant wallet address (required)")
-	fs.StringVar(&amount, "merchant-amount", "", "merchant amount in chain units (required)")
-	fs.StringVar(&orderID, "order-id", "", "off-chain reference, max 64 chars (required)")
-	fs.StringVar(&feeRecipient, "fee-recipient", "", "optional referral/creator fee recipient")
-	fs.parse(args)
-	requireChain(chain)
-	for k, v := range map[string]string{"merchant-wallet": wallet, "merchant-amount": amount, "order-id": orderID} {
-		if v == "" {
-			fail(exitInput, "--%s is required", k)
-		}
-	}
-	a := map[string]any{"chain": chain, "merchant_wallet": wallet, "merchant_amount": amount, "order_id": orderID}
-	if feeRecipient != "" {
-		a["fee_recipient"] = feeRecipient
-	}
-	emit(callTool("pay_with_split", a), g)
+func cmdPaySplit(_ []string) {
+	fail(exitInput, "pay-split is retired: use canonical AIFP-1 gross settlement (payer 100%%, merchant 99%%, AiFinPay 1%%, creator 0%%) through a verified v1.3 route")
 }
 
-func cmdQuoteSplit(args []string) {
-	fs, g := newFS("quote-split", "aifinpay quote-split --chain <solana|polygon> --merchant-amount A")
-	var chain, amount string
-	fs.StringVar(&chain, "chain", "", "chain: solana|polygon (required)")
-	fs.StringVar(&amount, "merchant-amount", "", "merchant amount in chain units (required)")
-	fs.parse(args)
-	requireChain(chain)
-	if amount == "" {
-		fail(exitInput, "--merchant-amount is required")
-	}
-	emit(callTool("quote_split", map[string]any{"chain": chain, "merchant_amount": amount}), g)
+func cmdQuoteSplit(_ []string) {
+	fail(exitInput, "quote-split is retired: request a canonical AIFP-1 quote; AIFP-2/x402 currently charges 0%% at the protocol layer")
 }
 
 func requireChain(chain string) {
