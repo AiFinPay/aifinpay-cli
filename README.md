@@ -8,10 +8,12 @@ machine-readable.
 
 | Route | Payer | Merchant/provider | AiFinPay | Creator |
 |---|---:|---:|---:|---:|
-| AIFP-1 | exact quoted gross | 99% | 1% | 0% |
+| AIFP-1 | exact quoted gross | quoted price minus the protocol fee | protocol fee, shown in each quote | 0% |
 | AIFP-2 / x402 | provider price | 100% | 0% | 0% |
 
-Network gas is separate. AIFP-1 is gross-inclusive; no fee is added on top.
+Network gas is separate. AIFP-1 is gross-inclusive: a protocol fee is included
+in the quoted price, never added on top. Each quote and the on-chain
+transaction show the exact split between the merchant and the protocol.
 AIFP-2/x402 has a temporary 0% AiFinPay protocol fee for the current launch
 period.
 

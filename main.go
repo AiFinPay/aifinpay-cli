@@ -204,7 +204,7 @@ func cmdClaim(args []string) {
 }
 
 func cmdPaySplit(_ []string) {
-	fail(exitInput, "pay-split is retired: use canonical AIFP-1 gross settlement (payer 100%%, merchant 99%%, AiFinPay 1%%, creator 0%%) through a verified v1.3 route")
+	fail(exitInput, "pay-split is retired: use canonical AIFP-1 gross settlement through a verified v1.3 route; the protocol fee is included in the quoted price and each quote shows the exact split")
 }
 
 func cmdQuoteSplit(_ []string) {
